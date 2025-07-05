@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import BiometricVerification from './components/BiometricVerification';
 
 function App() {
     const [activeTab, setActiveTab] = useState('register');
@@ -29,8 +28,6 @@ function App() {
         switch (activeTab) {
             case 'register':
                 return <RegistrationTab systemInfo={systemInfo} />;
-            case 'verify':
-                return <VerificationTab />;
             case 'demo':
                 return <DemoTab />;
             case 'stats':
@@ -73,12 +70,6 @@ function App() {
                     onClick={() => setActiveTab('register')}
                 >
                     👤 Register
-                </button>
-                <button 
-                    className={`tab ${activeTab === 'verify' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('verify')}
-                >
-                    🔍 Verify
                 </button>
                 <button 
                     className={`tab ${activeTab === 'demo' ? 'active' : ''}`}
@@ -355,9 +346,6 @@ const RegistrationTab = ({ systemInfo }) => {
         </div>
     );
 };
-
-// Verification Tab
-const VerificationTab = () => <BiometricVerification />;
 
 // Demo Tab
 const DemoTab = () => (
