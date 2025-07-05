@@ -113,9 +113,7 @@ const RegistrationTab = ({ systemInfo }) => {
     const [error, setError] = useState(null);
 
     const generateRandomVector = () => {
-        const vector = Array(4).fill(0).map(() => 
-            Math.floor(Math.random() * 1000 - 500)
-        );
+        const vector = Array(512).fill(0).map(() => (Math.random() * 2 - 1).toFixed(4));
         setBiometricVector(vector.join(', '));
     };
 
@@ -124,11 +122,8 @@ const RegistrationTab = ({ systemInfo }) => {
             generateRandomVector();
             return;
         }
-        
-        const currentVector = biometricVector.split(', ').map(v => parseInt(v));
-        const similarVector = currentVector.map(val => 
-            val + Math.floor(Math.random() * 20 - 10)
-        );
+        const currentVector = biometricVector.split(',').map(v => parseFloat(v.trim()));
+        const similarVector = currentVector.map(val => (val + (Math.random() - 0.5) * 0.1).toFixed(4));
         setBiometricVector(similarVector.join(', '));
     };
 
@@ -152,11 +147,11 @@ const RegistrationTab = ({ systemInfo }) => {
         try {
             const vectorArray = biometricVector
                 .split(',')
-                .map(v => parseInt(v.trim()))
+                .map(v => parseFloat(v.trim()))
                 .filter(v => !isNaN(v));
 
-            if (vectorArray.length !== 4) {
-                throw new Error('Vector must have exactly 4 dimensions');
+            if (vectorArray.length !== 512) {
+                throw new Error('Vector must have exactly 512 dimensions');
             }
 
             const response = await fetch('/api/biometric/register', {
@@ -199,9 +194,9 @@ const RegistrationTab = ({ systemInfo }) => {
 
     const validateVector = (vectorStr) => {
         try {
-            const vector = vectorStr.split(',').map(v => parseInt(v.trim()));
+            const vector = vectorStr.split(',').map(v => parseFloat(v.trim()));
             return {
-                valid: vector.length === 4 && vector.every(v => !isNaN(v)),
+                valid: vector.length === 512 && vector.every(v => !isNaN(v)),
                 length: vector.length
             };
         } catch {
@@ -243,18 +238,18 @@ const RegistrationTab = ({ systemInfo }) => {
                 
                 <div>
                     <label style={{fontWeight: 'bold', display: 'block', marginBottom: '8px'}}>
-                        Biometric Vector (4 dimensions):
+                        Biometric Vector (512 dimensions):
                         {biometricVector && (
                             <span style={{fontWeight: 'normal', fontSize: '0.9rem', marginLeft: '10px', color: vectorValidation.valid ? '#28a745' : '#dc3545'}}>
-                                {vectorValidation.length}/4 dimensions {vectorValidation.valid ? '✅' : '❌'}
+                                {vectorValidation.length}/512 dimensions {vectorValidation.valid ? '✅' : '❌'}
                             </span>
                         )}
                     </label>
                     <textarea 
                         value={biometricVector}
                         onChange={(e) => setBiometricVector(e.target.value)}
-                        placeholder="Enter 4 comma-separated numbers (e.g., 100, 200, 300, 400)" 
-                        rows="3"
+                        placeholder="Enter 512 comma-separated numbers (e.g., 0.1234, -0.5678, ...)" 
+                        rows="10"
                         style={{width: '100%', padding: '12px', border: '2px solid #e9ecef', borderRadius: '8px', fontFamily: 'monospace'}}
                         disabled={loading}
                         required
@@ -367,7 +362,9 @@ const DemoTab = () => (
 // Stats Tab
 const StatsTab = () => {
     const [stats, setStats] = useState(null);
+    const [benchmarkData, setBenchmarkData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [benchmarkLoading, setBenchmarkLoading] = useState(false);
 
     useEffect(() => {
         fetchStats();
@@ -387,6 +384,28 @@ const StatsTab = () => {
         }
     };
 
+    const runBenchmark = async () => {
+        setBenchmarkLoading(true);
+        try {
+            const response = await fetch('/api/proof/benchmark', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ iterations: 3 })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                setBenchmarkData(data.benchmark);
+            }
+        } catch (error) {
+            console.error('Benchmark failed:', error);
+        } finally {
+            setBenchmarkLoading(false);
+        }
+    };
+
     if (loading) {
         return <div>Loading statistics...</div>;
     }
@@ -399,7 +418,7 @@ const StatsTab = () => {
                     <h4>🏠 System Overview</h4>
                     <p>Total Users: {stats?.totalUsers || 0}</p>
                     <p>Total Commitments: {stats?.totalCommitments || 0}</p>
-                    <p>Vector Dimension: {stats?.vectorDimension || 4}D</p>
+                    <p>Vector Dimension: {stats?.vectorDimension || 512}D</p>
                     <p>Uptime: {Math.floor((stats?.uptime || 0) / 60)} minutes</p>
                 </div>
                 
@@ -414,18 +433,72 @@ const StatsTab = () => {
                 <div style={{background: '#f8f9fa', padding: '20px', borderRadius: '10px', borderLeft: '4px solid #ffc107'}}>
                     <h4>💾 Performance</h4>
                     <p>Memory Usage: {Math.round((stats?.memoryUsage?.heapUsed || 0) / 1024 / 1024)} MB</p>
-                    <p>Avg Proof Time: ~500ms</p>
-                    <p>Avg Verify Time: ~5ms</p>
-                    <p>Proof Size: ~200 bytes</p>
+                    {benchmarkData ? (
+                        <>
+                            <p>Avg Proof Time: {benchmarkData.summary.proofGeneration.averageTime.toFixed(0)}ms</p>
+                            <p>Avg Verify Time: {benchmarkData.summary.verification.averageTime.toFixed(0)}ms</p>
+                            <p>Proof Size: {benchmarkData.summary.proofSize.average.toFixed(0)} bytes</p>
+                            <p style={{fontSize: '0.8rem', color: '#666'}}>
+                                Last updated: {new Date(benchmarkData.timestamp).toLocaleTimeString()}
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <p>Avg Proof Time: --</p>
+                            <p>Avg Verify Time: --</p>
+                            <p>Proof Size: --</p>
+                        </>
+                    )}
                 </div>
             </div>
             
-            <button 
-                onClick={fetchStats}
-                style={{background: '#17a2b8', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '5px', cursor: 'pointer'}}
-            >
-                🔄 Refresh Stats
-            </button>
+            <div style={{display: 'flex', gap: '10px', marginBottom: '20px'}}>
+                <button 
+                    onClick={fetchStats}
+                    style={{background: '#17a2b8', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '5px', cursor: 'pointer'}}
+                >
+                    🔄 Refresh Stats
+                </button>
+                
+                <button 
+                    onClick={runBenchmark}
+                    disabled={benchmarkLoading}
+                    style={{
+                        background: benchmarkLoading ? '#ccc' : '#28a745', 
+                        color: 'white', 
+                        border: 'none', 
+                        padding: '10px 20px', 
+                        borderRadius: '5px', 
+                        cursor: benchmarkLoading ? 'not-allowed' : 'pointer'
+                    }}
+                >
+                    {benchmarkLoading ? '⏳ Running...' : '🚀 Run Performance Test'}
+                </button>
+            </div>
+
+            {benchmarkData && (
+                <div style={{background: '#f8f9fa', padding: '20px', borderRadius: '10px', marginTop: '20px'}}>
+                    <h4>📈 Performance Benchmark Results</h4>
+                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px'}}>
+                        <div>
+                            <strong>Proof Generation:</strong>
+                            <p>Success Rate: {(benchmarkData.successRate * 100).toFixed(1)}%</p>
+                            <p>Min Time: {benchmarkData.summary.proofGeneration.minTime}ms</p>
+                            <p>Max Time: {benchmarkData.summary.proofGeneration.maxTime}ms</p>
+                        </div>
+                        <div>
+                            <strong>Verification:</strong>
+                            <p>Min Time: {benchmarkData.summary.verification.minTime}ms</p>
+                            <p>Max Time: {benchmarkData.summary.verification.maxTime}ms</p>
+                        </div>
+                        <div>
+                            <strong>Proof Size:</strong>
+                            <p>Min: {benchmarkData.summary.proofSize.min} bytes</p>
+                            <p>Max: {benchmarkData.summary.proofSize.max} bytes</p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

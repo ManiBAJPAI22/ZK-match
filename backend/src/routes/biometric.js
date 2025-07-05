@@ -15,9 +15,9 @@ router.post('/register', async (req, res) => {
             });
         }
         
-        if (biometricVector.length !== 4) { // Using 4D vectors from our circuit
+        if (biometricVector.length !== 512) { // Using 512D vectors from our circuit
             return res.status(400).json({
-                error: 'Biometric vector must be 4-dimensional'
+                error: 'Biometric vector must be 512-dimensional'
             });
         }
         
@@ -63,7 +63,7 @@ router.post('/register', async (req, res) => {
         await biometricService.storeCommitment(userId, commitment, {
             timestamp: new Date(),
             vectorDimension: processedVector.length
-        });
+        }, processedVector);
         
         logger.info(`Successfully registered user: ${userId}`);
         
@@ -108,9 +108,9 @@ router.post('/verify', async (req, res) => {
             });
         }
         
-        if (biometricVector.length !== 4) { // Using 4D vectors from our circuit
+        if (biometricVector.length !== 512) { // Using 512D vectors from our circuit
             return res.status(400).json({
-                error: 'Biometric vector must be 4-dimensional'
+                error: 'Biometric vector must be 512-dimensional'
             });
         }
         

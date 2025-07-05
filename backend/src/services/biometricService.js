@@ -6,7 +6,7 @@ const commitmentDatabase = new Map();
 
 class BiometricService {
     constructor() {
-        this.vectorDimension = 4; // Changed from 16 to 4 to match our circuit
+        this.vectorDimension = 512;
         this.fixedPointScale = 1000;
     }
     
@@ -31,7 +31,7 @@ class BiometricService {
     }
     
     async checkUniqueness(vector, nonce, commitment) {
-        const threshold = 1000; // Adjust threshold for our test vectors
+        const threshold = 100; // Dot product threshold for 512-dimensional vectors (much lower)
         const existingCommitments = Array.from(commitmentDatabase.values());
         
         console.log(`Checking uniqueness against ${existingCommitments.length} existing commitments`);
@@ -40,11 +40,15 @@ class BiometricService {
         
         for (const existingData of existingCommitments) {
             try {
+                // Use the stored preprocessed vector for ZK proof input
+                const vectorB = existingData.vector;
+                if (!vectorB || vectorB.length !== this.vectorDimension) {
+                    console.log('Skipping user with missing or invalid vector:', existingData.userId);
+                    continue;
+                }
                 const proofResult = await proofService.generateSimilarityProof(
-                    vector, nonce, commitment,
-                    existingData.commitment, threshold
+                    vector, vectorB, threshold
                 );
-                
                 if (proofResult.success) {
                     console.log(`Proof result for ${existingData.userId}: isUnique = ${proofResult.isUnique}`);
                     if (proofResult.isUnique === "0") {
@@ -65,18 +69,17 @@ class BiometricService {
         };
     }
     
-    async storeCommitment(userId, commitment, metadata = {}) {
+    async storeCommitment(userId, commitment, metadata = {}, vector = null) {
         if (biometricDatabase.has(userId)) {
             throw new Error('User already exists');
         }
-        
         const userData = {
             userId,
             commitment,
             createdAt: new Date(),
-            metadata
+            metadata,
+            vector // Store the preprocessed vector for ZK proof input
         };
-        
         biometricDatabase.set(userId, userData);
         commitmentDatabase.set(commitment, userData);
         return true;
