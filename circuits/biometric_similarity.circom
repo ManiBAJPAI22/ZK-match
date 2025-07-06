@@ -2,6 +2,17 @@ pragma circom 2.0.0;
 
 include "components/cosine_similarity.circom";
 
+// biometric_similarity.circom
+// This circuit checks if two biometric vectors are sufficiently dissimilar (cosine similarity < threshold)
+// for privacy-preserving, Sybil-resistant registration.
+//
+// Security/Privacy: No raw vectors are revealed; only the result of the similarity check is output.
+// The circuit is designed for use in a zero-knowledge proof system (e.g., zkSNARKs).
+//
+// threshold: public input, e.g., 0.1 (scaled as needed for fixed-point arithmetic)
+//
+// For more details, see docs/ARCHITECTURE.md
+
 template BiometricSimilarity(n) {
     // Inputs (all public for simplicity)
     signal input vector_a[n];

@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import './BiometricRegistration.css';
 
+// BiometricRegistration.js
+// Only commitments (not raw vectors) are sent to the backend. Raw biometric data is never stored or transmitted.
+// See docs/ARCHITECTURE.md for privacy details.
+
 const BiometricRegistration = () => {
     const [userId, setUserId] = useState('');
     const [biometricVector, setBiometricVector] = useState('');
@@ -175,6 +179,7 @@ const BiometricRegistration = () => {
                         className="register-btn"
                         disabled={loading || !vectorValidation.valid}
                     >
+                        {/* TODO: Add a spinner or progress indicator during registration/proof generation for better UX */}
                         {loading ? (
                             <>
                                 <span className="spinner"></span>

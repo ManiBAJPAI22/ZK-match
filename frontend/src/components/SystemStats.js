@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './SystemStats.css';
 
+// SystemStats.js
+// This component displays system and memory stats for monitoring only.
+// No sensitive biometric data is ever displayed or exposed here.
+
 const SystemStats = () => {
     const [stats, setStats] = useState(null);
     const [proofInfo, setProofInfo] = useState(null);
@@ -286,6 +290,7 @@ const SystemStats = () => {
                 <div className="admin-controls">
                     <h3>⚙️ Admin Controls</h3>
                     <div className="control-buttons">
+                        {/* TODO: Add a spinner or progress indicator when refreshing stats for better UX */}
                         <button
                             onClick={fetchStats}
                             className="control-btn refresh"

@@ -90,6 +90,7 @@ class BiometricService {
     }
     
     async getSystemStats() {
+        // Returns system stats, including memory usage. No raw biometric data is ever exposed.
         return {
             totalUsers: biometricDatabase.size,
             totalCommitments: commitmentDatabase.size,

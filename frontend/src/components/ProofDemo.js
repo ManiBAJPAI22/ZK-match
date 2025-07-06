@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import './ProofDemo.css';
 
+// ProofDemo.js
+// This component demonstrates ZK proof generation and verification for biometric similarity.
+// No raw biometric data is ever sent to the backend; only proofs and commitments are transmitted.
+// See docs/ARCHITECTURE.md for privacy details.
+
 const ProofDemo = () => {
     const [vectorA, setVectorA] = useState('');
     const [vectorB, setVectorB] = useState('');
@@ -244,6 +249,7 @@ const ProofDemo = () => {
                                 disabled={!validateVectors() || loading}
                                 className="primary-btn"
                             >
+                                {/* TODO: Add a spinner or progress indicator during proof generation for better UX */}
                                 {loading ? (
                                     <>
                                         <span className="spinner"></span>
