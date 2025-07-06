@@ -28,8 +28,6 @@ function App() {
         switch (activeTab) {
             case 'register':
                 return <RegistrationTab systemInfo={systemInfo} />;
-            case 'demo':
-                return <DemoTab />;
             case 'stats':
                 return <StatsTab />;
             default:
@@ -52,12 +50,14 @@ function App() {
         <div className="app">
             <header className="app-header">
                 <div className="header-content">
-                    <h1>🔐 ZK Biometric Privacy System</h1>
-                    <p>Zero-Knowledge Biometric Verification with Anti-Sybil Protection</p>
+                    <div>
+                        <h1>ZK Biometric Privacy System</h1>
+                        <p>Zero-Knowledge Biometric Verification with Anti-Sybil Protection</p>
+                    </div>
                     {systemInfo && (
                         <div className="system-status">
                             <span className={`status-indicator ${systemInfo.circuitReady ? 'ready' : 'not-ready'}`}>
-                                {systemInfo.circuitReady ? '✅ Circuit Ready - Full ZK Active!' : '❌ Demo Mode'}
+                                {systemInfo.circuitReady ? 'Circuit Ready - Full ZK Active!' : 'Demo Mode'}
                             </span>
                         </div>
                     )}
@@ -69,19 +69,13 @@ function App() {
                     className={`tab ${activeTab === 'register' ? 'active' : ''}`}
                     onClick={() => setActiveTab('register')}
                 >
-                    👤 Register
-                </button>
-                <button 
-                    className={`tab ${activeTab === 'demo' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('demo')}
-                >
-                    🧪 Demo
+                    Register
                 </button>
                 <button 
                     className={`tab ${activeTab === 'stats' ? 'active' : ''}`}
                     onClick={() => setActiveTab('stats')}
                 >
-                    📊 Stats
+                    Stats
                 </button>
             </nav>
 
@@ -113,9 +107,7 @@ const RegistrationTab = ({ systemInfo }) => {
     const [error, setError] = useState(null);
 
     const generateRandomVector = () => {
-        const vector = Array(4).fill(0).map(() => 
-            Math.floor(Math.random() * 1000 - 500)
-        );
+        const vector = Array(512).fill(0).map(() => (Math.random() * 2 - 1).toFixed(4));
         setBiometricVector(vector.join(', '));
     };
 
@@ -124,11 +116,8 @@ const RegistrationTab = ({ systemInfo }) => {
             generateRandomVector();
             return;
         }
-        
-        const currentVector = biometricVector.split(', ').map(v => parseInt(v));
-        const similarVector = currentVector.map(val => 
-            val + Math.floor(Math.random() * 20 - 10)
-        );
+        const currentVector = biometricVector.split(',').map(v => parseFloat(v.trim()));
+        const similarVector = currentVector.map(val => (val + (Math.random() - 0.5) * 0.1).toFixed(4));
         setBiometricVector(similarVector.join(', '));
     };
 
@@ -152,11 +141,11 @@ const RegistrationTab = ({ systemInfo }) => {
         try {
             const vectorArray = biometricVector
                 .split(',')
-                .map(v => parseInt(v.trim()))
+                .map(v => parseFloat(v.trim()))
                 .filter(v => !isNaN(v));
 
-            if (vectorArray.length !== 4) {
-                throw new Error('Vector must have exactly 4 dimensions');
+            if (vectorArray.length !== 512) {
+                throw new Error('Vector must have exactly 512 dimensions');
             }
 
             const response = await fetch('/api/biometric/register', {
@@ -199,9 +188,9 @@ const RegistrationTab = ({ systemInfo }) => {
 
     const validateVector = (vectorStr) => {
         try {
-            const vector = vectorStr.split(',').map(v => parseInt(v.trim()));
+            const vector = vectorStr.split(',').map(v => parseFloat(v.trim()));
             return {
-                valid: vector.length === 4 && vector.every(v => !isNaN(v)),
+                valid: vector.length === 512 && vector.every(v => !isNaN(v)),
                 length: vector.length
             };
         } catch {
@@ -213,68 +202,66 @@ const RegistrationTab = ({ systemInfo }) => {
 
     return (
         <div>
-            <h3>👤 Biometric Registration</h3>
+            <h3>Biometric Registration</h3>
             <p>Register a new biometric identity using Zero-Knowledge proofs.</p>
             
             {systemInfo?.circuitReady ? (
-                <div style={{background: '#d4edda', padding: '15px', borderRadius: '8px', margin: '15px 0', border: '1px solid #28a745', color: '#155724'}}>
-                    <strong>🔐 ZK Circuit Active!</strong> Real Zero-Knowledge proofs are being generated.
+                <div className="alert alert-success">
+                    <strong>ZK Circuit Active!</strong> Real Zero-Knowledge proofs are being generated.
                     Your biometric data will never be stored - only cryptographic commitments.
                 </div>
             ) : (
-                <div style={{background: '#fff3cd', padding: '15px', borderRadius: '8px', margin: '15px 0', border: '1px solid #ffeaa7', color: '#856404'}}>
-                    <strong>⚠️ Demo Mode:</strong> ZK circuits not yet compiled. Run setup scripts for full functionality.
+                <div className="alert alert-warning">
+                    <strong>Demo Mode:</strong> ZK circuits not yet compiled. Run setup scripts for full functionality.
                 </div>
             )}
 
-            <form onSubmit={handleRegister} style={{display: 'grid', gap: '20px'}}>
-                <div>
-                    <label style={{fontWeight: 'bold', display: 'block', marginBottom: '8px'}}>User ID:</label>
+            <form onSubmit={handleRegister} className="registration-form">
+                <div className="form-group">
+                    <label>User ID:</label>
                     <input 
                         type="text" 
                         value={userId}
                         onChange={(e) => setUserId(e.target.value)}
-                        placeholder="Enter unique user identifier" 
-                        style={{width: '100%', padding: '12px', border: '2px solid #e9ecef', borderRadius: '8px'}}
+                        placeholder="Enter unique user identifier"
                         disabled={loading}
                         required
                     />
                 </div>
                 
-                <div>
-                    <label style={{fontWeight: 'bold', display: 'block', marginBottom: '8px'}}>
-                        Biometric Vector (4 dimensions):
+                <div className="form-group">
+                    <label>
+                        Biometric Vector (512 dimensions):
                         {biometricVector && (
-                            <span style={{fontWeight: 'normal', fontSize: '0.9rem', marginLeft: '10px', color: vectorValidation.valid ? '#28a745' : '#dc3545'}}>
-                                {vectorValidation.length}/4 dimensions {vectorValidation.valid ? '✅' : '❌'}
+                            <span className={`vector-status ${vectorValidation.valid ? 'valid' : 'invalid'}`}>
+                                {vectorValidation.length}/512 dimensions {vectorValidation.valid ? '✅' : '❌'}
                             </span>
                         )}
                     </label>
                     <textarea 
                         value={biometricVector}
                         onChange={(e) => setBiometricVector(e.target.value)}
-                        placeholder="Enter 4 comma-separated numbers (e.g., 100, 200, 300, 400)" 
-                        rows="3"
-                        style={{width: '100%', padding: '12px', border: '2px solid #e9ecef', borderRadius: '8px', fontFamily: 'monospace'}}
+                        placeholder="Enter 512 comma-separated numbers (e.g., 0.1234, -0.5678, ...)" 
+                        rows="10"
                         disabled={loading}
                         required
                     />
-                    <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
+                    <div className="button-group">
                         <button
                             type="button"
                             onClick={generateRandomVector}
-                            style={{background: '#6c757d', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer'}}
+                            className="secondary-button"
                             disabled={loading}
                         >
-                            🎲 Generate Random
+                            Generate Random
                         </button>
                         <button
                             type="button"
                             onClick={generateSimilarVector}
-                            style={{background: '#6c757d', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer'}}
+                            className="secondary-button"
                             disabled={loading}
                         >
-                            🔄 Generate Similar
+                            Generate Similar
                         </button>
                     </div>
                 </div>
@@ -282,19 +269,7 @@ const RegistrationTab = ({ systemInfo }) => {
                 <button
                     type="submit"
                     disabled={!vectorValidation.valid || loading}
-                    style={{
-                        background: vectorValidation.valid && !loading ? 'linear-gradient(135deg, #007bff, #0056b3)' : '#ccc',
-                        color: 'white',
-                        border: 'none',
-                        padding: '15px 30px',
-                        borderRadius: '10px',
-                        fontSize: '1.1rem',
-                        cursor: vectorValidation.valid && !loading ? 'pointer' : 'not-allowed',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '10px'
-                    }}
+                    className={`submit-button ${!vectorValidation.valid || loading ? 'disabled' : ''}`}
                 >
                     {loading ? (
                         <>
@@ -302,38 +277,31 @@ const RegistrationTab = ({ systemInfo }) => {
                             Generating ZK Proof...
                         </>
                     ) : (
-                        '🔐 Register Biometric'
+                        'Register Biometric'
                     )}
                 </button>
             </form>
 
             {error && (
-                <div style={{background: '#f8d7da', padding: '15px', borderRadius: '8px', margin: '15px 0', border: '1px solid #dc3545', color: '#721c24'}}>
+                <div className="alert alert-error">
                     <strong>Error:</strong> {error}
                 </div>
             )}
 
             {result && (
-                <div style={{
-                    background: result.success ? '#d4edda' : '#f8d7da',
-                    padding: '20px',
-                    borderRadius: '10px',
-                    margin: '20px 0',
-                    border: `1px solid ${result.success ? '#28a745' : '#dc3545'}`,
-                    color: result.success ? '#155724' : '#721c24'
-                }}>
-                    <h4>{result.success ? '✅ Registration Successful' : '❌ Registration Failed'}</h4>
+                <div className={`alert ${result.success ? 'alert-success' : 'alert-error'}`}>
+                    <h4>{result.success ? 'Registration Successful' : 'Registration Failed'}</h4>
                     <p><strong>Message:</strong> {result.message}</p>
                     {result.success && (
                         <>
                             <p><strong>User ID:</strong> {result.userId}</p>
                             <p><strong>Commitment:</strong> {result.commitment}</p>
                             {result.zkEnabled && (
-                                <div style={{background: 'rgba(40,167,69,0.1)', padding: '15px', borderRadius: '8px', marginTop: '15px'}}>
-                                    <p>🔐 <strong>Zero-Knowledge Proof Generated!</strong></p>
-                                    <p>✅ Your biometric data was never stored</p>
-                                    <p>🛡️ Privacy-preserving commitment created</p>
-                                    <p>🔍 Anti-Sybil protection active</p>
+                                <div className="zk-proof-info">
+                                    <p><strong>Zero-Knowledge Proof Generated!</strong></p>
+                                    <p>Your biometric data was never stored</p>
+                                    <p>Privacy-preserving commitment created</p>
+                                    <p>Anti-Sybil protection active</p>
                                 </div>
                             )}
                         </>
@@ -350,9 +318,9 @@ const RegistrationTab = ({ systemInfo }) => {
 // Demo Tab
 const DemoTab = () => (
     <div>
-        <h3>🧪 Zero-Knowledge Proof Demo</h3>
+        <h3>Zero-Knowledge Proof Demo</h3>
         <p>Interactive demonstration of Zero-Knowledge biometric similarity proofs.</p>
-        <div style={{background: '#f8f9fa', padding: '20px', borderRadius: '10px', margin: '20px 0'}}>
+        <div className="demo-info-card">
             <h4>How ZK Proofs Work:</h4>
             <ol>
                 <li><strong>Commitment:</strong> Biometric data is converted to a cryptographic commitment</li>
@@ -367,7 +335,9 @@ const DemoTab = () => (
 // Stats Tab
 const StatsTab = () => {
     const [stats, setStats] = useState(null);
+    const [benchmarkData, setBenchmarkData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [benchmarkLoading, setBenchmarkLoading] = useState(false);
 
     useEffect(() => {
         fetchStats();
@@ -387,45 +357,114 @@ const StatsTab = () => {
         }
     };
 
+    const runBenchmark = async () => {
+        setBenchmarkLoading(true);
+        try {
+            const response = await fetch('/api/proof/benchmark', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ iterations: 3 })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                setBenchmarkData(data.benchmark);
+            }
+        } catch (error) {
+            console.error('Benchmark failed:', error);
+        } finally {
+            setBenchmarkLoading(false);
+        }
+    };
+
     if (loading) {
         return <div>Loading statistics...</div>;
     }
 
     return (
         <div>
-            <h3>📊 System Statistics</h3>
-            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', margin: '20px 0'}}>
-                <div style={{background: '#f8f9fa', padding: '20px', borderRadius: '10px', borderLeft: '4px solid #007bff'}}>
-                    <h4>🏠 System Overview</h4>
-                    <p>Total Users: {stats?.totalUsers || 0}</p>
-                    <p>Total Commitments: {stats?.totalCommitments || 0}</p>
-                    <p>Vector Dimension: {stats?.vectorDimension || 4}D</p>
-                    <p>Uptime: {Math.floor((stats?.uptime || 0) / 60)} minutes</p>
+            <h3>System Statistics</h3>
+            <div className="stats-grid">
+                <div className="stats-card">
+                    <h4>System Overview</h4>
+                    <p>Total Users: <strong>{stats?.totalUsers || 0}</strong></p>
+                    <p>Total Commitments: <strong>{stats?.totalCommitments || 0}</strong></p>
+                    <p>Vector Dimension: <strong>{stats?.vectorDimension || 512}D</strong></p>
+                    <p>Uptime: <strong>{Math.floor((stats?.uptime || 0) / 60)} minutes</strong></p>
                 </div>
                 
-                <div style={{background: '#f8f9fa', padding: '20px', borderRadius: '10px', borderLeft: '4px solid #28a745'}}>
-                    <h4>🔐 ZK Proof System</h4>
-                    <p>Circuit Status: ✅ Active</p>
-                    <p>Proof Algorithm: Groth16</p>
-                    <p>Curve: BN-128</p>
-                    <p>Privacy Level: Maximum</p>
+                <div className="stats-card">
+                    <h4>ZK Proof System</h4>
+                    <p>Circuit Status: <strong>Active</strong></p>
+                    <p>Proof Algorithm: <strong>Groth16</strong></p>
+                    <p>Curve: <strong>BN-128</strong></p>
+                    <p>Privacy Level: <strong>Maximum</strong></p>
                 </div>
                 
-                <div style={{background: '#f8f9fa', padding: '20px', borderRadius: '10px', borderLeft: '4px solid #ffc107'}}>
-                    <h4>💾 Performance</h4>
-                    <p>Memory Usage: {Math.round((stats?.memoryUsage?.heapUsed || 0) / 1024 / 1024)} MB</p>
-                    <p>Avg Proof Time: ~500ms</p>
-                    <p>Avg Verify Time: ~5ms</p>
-                    <p>Proof Size: ~200 bytes</p>
+                <div className="stats-card">
+                    <h4>Performance</h4>
+                    <p>Memory Usage: <strong>{Math.round((stats?.memoryUsage?.heapUsed || 0) / 1024 / 1024)} MB</strong></p>
+                    {benchmarkData ? (
+                        <>
+                            <p>Avg Proof Time: <strong>{benchmarkData.summary.proofGeneration.averageTime.toFixed(0)}ms</strong></p>
+                            <p>Avg Verify Time: <strong>{benchmarkData.summary.verification.averageTime.toFixed(0)}ms</strong></p>
+                            <p>Proof Size: <strong>{benchmarkData.summary.proofSize.average.toFixed(0)} bytes</strong></p>
+                            <p className="timestamp">
+                                Last updated: {new Date(benchmarkData.timestamp).toLocaleTimeString()}
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <p>Avg Proof Time: <strong>--</strong></p>
+                            <p>Avg Verify Time: <strong>--</strong></p>
+                            <p>Proof Size: <strong>--</strong></p>
+                        </>
+                    )}
                 </div>
             </div>
             
-            <button 
-                onClick={fetchStats}
-                style={{background: '#17a2b8', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '5px', cursor: 'pointer'}}
-            >
-                🔄 Refresh Stats
-            </button>
+            <div className="button-group">
+                <button 
+                    onClick={fetchStats}
+                    className="action-button refresh-button"
+                >
+                    Refresh Stats
+                </button>
+                
+                <button 
+                    onClick={runBenchmark}
+                    disabled={benchmarkLoading}
+                    className={`action-button benchmark-button ${benchmarkLoading ? 'loading' : ''}`}
+                >
+                    {benchmarkLoading ? 'Running...' : 'Run Performance Test'}
+                </button>
+            </div>
+
+            {benchmarkData && (
+                <div className="benchmark-results">
+                    <h4>Performance Benchmark Results</h4>
+                    <div className="benchmark-grid">
+                        <div className="benchmark-section">
+                            <strong>Proof Generation:</strong>
+                            <p>Success Rate: {(benchmarkData.successRate * 100).toFixed(1)}%</p>
+                            <p>Min Time: {benchmarkData.summary.proofGeneration.minTime}ms</p>
+                            <p>Max Time: {benchmarkData.summary.proofGeneration.maxTime}ms</p>
+                        </div>
+                        <div className="benchmark-section">
+                            <strong>Verification:</strong>
+                            <p>Min Time: {benchmarkData.summary.verification.minTime}ms</p>
+                            <p>Max Time: {benchmarkData.summary.verification.maxTime}ms</p>
+                        </div>
+                        <div className="benchmark-section">
+                            <strong>Proof Size:</strong>
+                            <p>Min: {benchmarkData.summary.proofSize.min} bytes</p>
+                            <p>Max: {benchmarkData.summary.proofSize.max} bytes</p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

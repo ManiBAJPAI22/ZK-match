@@ -41,39 +41,25 @@ class ProofService {
         }
     }
     
-    async generateSimilarityProof(vectorA, nonceA, commitmentA, commitmentB, threshold) {
+    async generateSimilarityProof(vectorA, vectorB, threshold) {
         try {
             if (!this.circuitReady) {
                 throw new Error('ZK circuit not ready');
             }
-            
-            // For our 4D circuit, create a 4D vectorB
-            const vectorB = [
-                (commitmentA % 100) - 50,
-                (commitmentA % 200) - 100,
-                (commitmentA % 300) - 150,
-                (commitmentA % 400) - 200
-            ];
-            const nonceB = commitmentB % 1000000;
-            
             const input = {
                 vector_a: vectorA,
                 vector_b: vectorB,
                 threshold: threshold
             };
-            
             console.log('🔐 Generating ZK proof with input:', input);
             const startTime = Date.now();
-            
             const { proof, publicSignals } = await snarkjs.groth16.fullProve(
                 input,
                 this.wasmPath,
                 this.zkeyPath
             );
-            
             const generationTime = Date.now() - startTime;
             console.log(`✅ ZK proof generated in ${generationTime}ms`);
-            
             return {
                 success: true,
                 proof,
@@ -82,7 +68,6 @@ class ProofService {
                 generationTime,
                 proofSize: JSON.stringify(proof).length
             };
-            
         } catch (error) {
             console.error('❌ ZK proof generation failed:', error);
             return {

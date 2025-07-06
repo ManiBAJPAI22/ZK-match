@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import './BiometricRegistration.css';
 
+// BiometricRegistration.js
+// Only commitments (not raw vectors) are sent to the backend. Raw biometric data is never stored or transmitted.
+// See docs/ARCHITECTURE.md for privacy details.
+
 const BiometricRegistration = () => {
     const [userId, setUserId] = useState('');
     const [biometricVector, setBiometricVector] = useState('');
@@ -10,9 +14,7 @@ const BiometricRegistration = () => {
 
     // Generate random biometric vector for demo purposes
     const generateRandomVector = () => {
-        const vector = Array(16).fill(0).map(() => 
-            (Math.random() * 2 - 1).toFixed(4)
-        );
+        const vector = Array(512).fill(0).map(() => (Math.random() * 2 - 1).toFixed(4));
         setBiometricVector(vector.join(', '));
     };
 
@@ -22,11 +24,8 @@ const BiometricRegistration = () => {
             generateRandomVector();
             return;
         }
-        
-        const currentVector = biometricVector.split(', ').map(v => parseFloat(v));
-        const similarVector = currentVector.map(val => 
-            (val + (Math.random() - 0.5) * 0.1).toFixed(4) // Add small noise
-        );
+        const currentVector = biometricVector.split(',').map(v => parseFloat(v.trim()));
+        const similarVector = currentVector.map(val => (val + (Math.random() - 0.5) * 0.1).toFixed(4));
         setBiometricVector(similarVector.join(', '));
     };
 
@@ -54,8 +53,8 @@ const BiometricRegistration = () => {
                 .map(v => parseFloat(v.trim()))
                 .filter(v => !isNaN(v));
 
-            if (vectorArray.length !== 16) {
-                throw new Error('Vector must have exactly 16 dimensions');
+            if (vectorArray.length !== 512) {
+                throw new Error('Vector must have exactly 512 dimensions');
             }
 
             // Send registration request
@@ -101,7 +100,7 @@ const BiometricRegistration = () => {
         try {
             const vector = vectorStr.split(',').map(v => parseFloat(v.trim()));
             return {
-                valid: vector.length === 16 && vector.every(v => !isNaN(v)),
+                valid: vector.length === 512 && vector.every(v => !isNaN(v)),
                 length: vector.length
             };
         } catch {
@@ -136,11 +135,11 @@ const BiometricRegistration = () => {
 
                     <div className="form-group">
                         <label htmlFor="biometricVector">
-                            Biometric Vector (16 dimensions)
+                            Biometric Vector (512 dimensions)
                             <span className="vector-info">
                                 {biometricVector && (
                                     <span className={vectorValidation.valid ? 'valid' : 'invalid'}>
-                                        {vectorValidation.length}/16 dimensions
+                                        {vectorValidation.length}/512 dimensions
                                         {vectorValidation.valid ? ' ✅' : ' ❌'}
                                     </span>
                                 )}
@@ -150,8 +149,8 @@ const BiometricRegistration = () => {
                             id="biometricVector"
                             value={biometricVector}
                             onChange={(e) => setBiometricVector(e.target.value)}
-                            placeholder="Enter 16 comma-separated numbers (e.g., 0.1234, -0.5678, ...)"
-                            rows="4"
+                            placeholder="Enter 512 comma-separated numbers (e.g., 0.1234, -0.5678, ...)"
+                            rows="10"
                             required
                             disabled={loading}
                         />
@@ -180,6 +179,7 @@ const BiometricRegistration = () => {
                         className="register-btn"
                         disabled={loading || !vectorValidation.valid}
                     >
+                        {/* TODO: Add a spinner or progress indicator during registration/proof generation for better UX */}
                         {loading ? (
                             <>
                                 <span className="spinner"></span>
@@ -223,7 +223,7 @@ const BiometricRegistration = () => {
                         <div className="step">
                             <span className="step-number">1</span>
                             <div className="step-content">
-                                <strong>Vector Processing:</strong> Your biometric is converted to 16 numbers
+                                <strong>Vector Processing:</strong> Your biometric is converted to 512 numbers
                             </div>
                         </div>
                         <div className="step">

@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import './BiometricVerification.css';
 
+// BiometricVerification.js
+// Only ZK proofs and commitments are sent to the backend. Raw biometric vectors are never transmitted or stored.
+// See docs/ARCHITECTURE.md for privacy details.
+
 const BiometricVerification = () => {
     const [userId, setUserId] = useState('');
     const [biometricVector, setBiometricVector] = useState('');
@@ -155,6 +159,7 @@ const BiometricVerification = () => {
                         className="verify-btn"
                         disabled={loading || !vectorValidation.valid}
                     >
+                        {/* TODO: Add a spinner or progress indicator during verification/proof generation for better UX */}
                         {loading ? (
                             <>
                                 <span className="spinner"></span>
