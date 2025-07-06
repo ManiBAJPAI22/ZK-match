@@ -24,8 +24,8 @@
 **Diagram:**
 ```mermaid
 flowchart TD
-    A[User Biometric Vector (v)] -->|Quantize & Scale| B[Quantized Vector (v')]
-    B -->|Generate Nonce (n)| C[Commitment: C = Commit(v', n)]
+    A[User Biometric Vector v] -->|Quantize and Scale| B[Quantized Vector v prime]
+    B -->|Generate Nonce n| C[Commitment C equals Commit of v prime and n]
     C -->|Store| D[Database]
     B -->|Discard| E[Original Vector Not Stored]
 ```
@@ -43,7 +43,7 @@ flowchart TD
 - The server verifies all proofs; if all pass, registration is allowed
 
 **Pseudo-code:**
-```pseudo
+```javascript
 for each stored commitment C_i:
     User proves in ZK:
         - Knows v_i, n_i such that Commit(v_i, n_i) == C_i
@@ -58,9 +58,9 @@ sequenceDiagram
     participant User
     participant Server
     loop For each stored user
-        User->>User: Generate ZK proof (v_new, v_i, n_i, t)
-        User->>Server: Send proof_i
-        Server->>Server: Verify proof_i (cos_sim < 0.1)
+        User->>User: Generate ZK proof
+        User->>Server: Send proof
+        Server->>Server: Verify proof cosine similarity less than 0.1
     end
     Server->>User: Registration allowed if all proofs pass
 ```
@@ -71,12 +71,12 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    subgraph Client
+    subgraph Client[Client Side]
         A1[User Biometric Vector]
-        A2[Quantize, Commit, Generate Proofs]
-        A3[ZK Proofs, Commitment]
+        A2[Quantize Commit Generate Proofs]
+        A3[ZK Proofs Commitment]
     end
-    subgraph Server
+    subgraph Server[Server Side]
         B1[Commitment DB]
         B2[Verify ZK Proofs]
         B3[Store Commitment]
@@ -119,4 +119,4 @@ flowchart TD
 - See code comments in key files for privacy/security explanations
 - For production, use encrypted, persistent storage and a secure trusted setup
 - All architectural decisions and diagrams are in this document
-- For questions, see the README or contact the project maintainer 
+- For questions, see the README or contact the project maintainer
