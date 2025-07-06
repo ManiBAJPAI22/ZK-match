@@ -33,13 +33,39 @@ A privacy-preserving biometric system using Zero-Knowledge Proofs (ZKPs) to prev
    cd frontend && npm install && cd ..
    ```
 
-3. **Compile circuits and generate keys:**
+3. **Set up ZK Circuit Keys (Required):**
+   
+   **Option A: Generate Your Own Keys (Recommended for Production)**
    ```bash
+   # Install Circom globally if not already installed
+   npm install -g circom
+   
+   # Install snarkjs globally if not already installed
+   npm install -g snarkjs
+   
    # Compile the ZK circuit
    npm run compile
    
-   # Generate trusted setup keys
+   # Generate trusted setup keys (this may take 10-30 minutes)
    npm run setup-keys
+   ```
+   
+   **Option B: Download Pre-generated Keys (Demo/Development)**
+   ```bash
+   # Create keys directory
+   mkdir -p keys
+   
+   # Download pre-generated keys (if available)
+   # Note: Replace with actual download links if you provide them
+   curl -o keys/biometric_similarity_final.zkey <download-url>
+   curl -o keys/verification_key.json <download-url>
+   curl -o keys/biometric_similarity_js/biometric_similarity.wasm <download-url>
+   ```
+   
+   **Option C: Use Demo Mode (No ZK Proofs)**
+   ```bash
+   # The system will run in demo mode without ZK proofs
+   # Some features will be limited but the UI will work
    ```
 
 4. **Start the application:**
@@ -63,8 +89,9 @@ A privacy-preserving biometric system using Zero-Knowledge Proofs (ZKPs) to prev
 
 #### Backend (Render/Railway/Heroku)
 1. Deploy to your preferred platform (Render recommended for free tier)
-2. Set environment variables as needed
-3. Update frontend API URL to point to your backend
+2. **Important:** Include the generated keys in your deployment or generate them during deployment
+3. Set environment variables as needed
+4. Update frontend API URL to point to your backend
 
 ## Architecture
 See `docs/ARCHITECTURE.md` for detailed diagrams, flowcharts, and developer notes.
@@ -134,8 +161,10 @@ See `docs/ARCHITECTURE.md` for detailed diagrams, flowcharts, and developer note
 1. **Circuit not ready:** Run `npm run compile` and `npm run setup-keys`
 2. **Port conflicts:** Change ports in `frontend/package.json` (proxy) and `backend/src/app.js`
 3. **Memory issues:** Increase Node.js memory limit with `--max-old-space-size=4096`
+4. **Missing keys:** Ensure you've generated or downloaded the required ZK circuit keys
 
 ### Getting Help
 - Check the logs in the terminal for error messages
 - Ensure all dependencies are installed correctly
 - Verify that circuit files are generated in the `keys/` directory
+- If keys are missing, the system will run in demo mode with limited functionality
