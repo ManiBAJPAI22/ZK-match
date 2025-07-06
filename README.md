@@ -17,7 +17,7 @@ A privacy-preserving biometric system using Zero-Knowledge Proofs (ZKPs) to prev
 
 1. **Clone the repository:**
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/ManiBAJPAI22/ZK-match/tree/512D
    cd zk-biometric-system
    ```
 
@@ -35,7 +35,7 @@ A privacy-preserving biometric system using Zero-Knowledge Proofs (ZKPs) to prev
 
 3. **Set up ZK Circuit Keys (Required):**
    
-   **Option A: Generate Your Own Keys (Recommended for Production)**
+   **Recommended: Generate Your Own Keys Using Provided Scripts**
    ```bash
    # Install Circom globally if not already installed
    npm install -g circom
@@ -43,30 +43,25 @@ A privacy-preserving biometric system using Zero-Knowledge Proofs (ZKPs) to prev
    # Install snarkjs globally if not already installed
    npm install -g snarkjs
    
-   # Compile the ZK circuit
+   # Compile the ZK circuit (generates .r1cs, .wasm, .sym files)
    npm run compile
+   # OR run the script directly:
+   ./scripts/compile_circuits.sh
    
    # Generate trusted setup keys (this may take 10-30 minutes)
+   # This creates the proving key (.zkey) and verification key (.json)
    npm run setup-keys
-   ```
+   # OR run the script directly:
+   ./scripts/generate_keys.sh
    
-   **Option B: Download Pre-generated Keys (Demo/Development)**
-   ```bash
-   # Create keys directory
-   mkdir -p keys
-   
-   # Download pre-generated keys (if available)
-   # Note: Replace with actual download links if you provide them
-   curl -o keys/biometric_similarity_final.zkey <download-url>
-   curl -o keys/verification_key.json <download-url>
-   curl -o keys/biometric_similarity_js/biometric_similarity.wasm <download-url>
+   # Alternative: Quick test ceremony (faster, for development)
+   ./scripts/create_test_ceremony.sh
    ```
-   
-   **Option C: Use Demo Mode (No ZK Proofs)**
-   ```bash
-   # The system will run in demo mode without ZK proofs
-   # Some features will be limited but the UI will work
-   ```
+
+   **Note:** The keys are not included in the repository for security reasons. 
+   Each user should generate their own keys using the provided scripts.
+   - Use `./scripts/create_test_ceremony.sh` for quick development/testing
+   - Use `./scripts/generate_keys.sh` for production-ready keys
 
 4. **Start the application:**
    ```bash
@@ -78,20 +73,6 @@ A privacy-preserving biometric system using Zero-Knowledge Proofs (ZKPs) to prev
    - Open your browser and go to: `http://localhost:3000`
    - Backend API runs on: `http://localhost:3001`
 
-### Production Deployment
-
-#### Frontend (Vercel)
-1. Push your code to GitHub
-2. Go to [vercel.com](https://vercel.com/) and create a new project
-3. Set root directory to `frontend/`
-4. Add environment variable: `REACT_APP_API_URL` pointing to your backend URL
-5. Deploy
-
-#### Backend (Render/Railway/Heroku)
-1. Deploy to your preferred platform (Render recommended for free tier)
-2. **Important:** Include the generated keys in your deployment or generate them during deployment
-3. Set environment variables as needed
-4. Update frontend API URL to point to your backend
 
 ## Architecture
 See `docs/ARCHITECTURE.md` for detailed diagrams, flowcharts, and developer notes.
@@ -163,8 +144,3 @@ See `docs/ARCHITECTURE.md` for detailed diagrams, flowcharts, and developer note
 3. **Memory issues:** Increase Node.js memory limit with `--max-old-space-size=4096`
 4. **Missing keys:** Ensure you've generated or downloaded the required ZK circuit keys
 
-### Getting Help
-- Check the logs in the terminal for error messages
-- Ensure all dependencies are installed correctly
-- Verify that circuit files are generated in the `keys/` directory
-- If keys are missing, the system will run in demo mode with limited functionality
